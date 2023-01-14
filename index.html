@@ -136,6 +136,11 @@
             text-decoration: none;
             color: white;
         }
+
+        #result > span{
+            border-radius: 50%;
+            overflow-x: hidden;
+        }
     </style>
 </head>
 <body>
@@ -160,11 +165,24 @@
                'button-success': running}">{{running?'停!':'开始'}}</button>
     <button class="pure-button button-warning" @click="reset">重置</button>
 </div>
+<script src="node_modules/axios/dist/axios.min.js"></script>
 <script type="text/javascript" src="js/zepto.js"></script>
 <script type="text/javascript" src="js/vue.js"></script>
 <script type="text/javascript" src="js/tagcanvas.js"></script>
 <script type="text/javascript" src="js/member.js"></script>
 <script type="text/javascript">
+
+    // let wxMember = [];
+    function getMembers(){
+        axios.get('https://mp.singzer.cn/lotterygame/list')
+            .then(function (response) {
+                member = response.data.data.lottery_game_list[0].join_users
+            })
+            .catch(function (error) {
+                console.log(error);
+            });
+    }
+
     (function(){
         var choosed = JSON.parse(localStorage.getItem('choosed')) || {};
         console.log(choosed);
@@ -172,7 +190,7 @@
             return [0.1 * Math.random() + 0.01, -(0.1 * Math.random() + 0.01)];
         };
         var getKey = function(item){
-            return item.name + '-' + item.phone;
+            return item.user.nickname + '-' + item.user.id;
         };
         var createHTML = function(){
             var html = [ '<ul>' ];
@@ -180,14 +198,23 @@
                 item.index = index;
                 var key = getKey(item);
                 var color = choosed[key] ? 'yellow' : 'white';
-                html.push('<li><a href="#" style="color: ' + color + ';">' + item.name + '</a></li>');
+                // html.push('<li><a href="#" style="color: ' + color + ';">' + item.name + '</a></li>');
+                // alert(item)
+                // getMembers()
+               
+                console.log('222',item.user.nickname)
+                html.push(`<li><a  href="#" style="color:${color}">${item.user.nickname ? item.user.nickname : ''}</a></li>`)
+                // html.push(`<>` url(https://thirdwx.qlogo.cn/mmopen/vi_32/aku0U23oNwuxkumv5e3tdGQEvRnhZBCe263FbDewcDD97FAibNwiaoE9ND5aMicMR4SBrlaJjxrdV3HGRQ5dZYs7Q/132))
+                // const test = 'url(https://thirdwx.qlogo.cn/mmopen/vi_32/aku0U23oNwuxkumv5e3tdGQEvRnhZBCe263FbDewcDD97FAibNwiaoE9ND5aMicMR4SBrlaJjxrdV3HGRQ5dZYs7Q/132)'
+                // html.push(`<li style="background-image:${test};height:20px"><a  href="#" style="color:${color}">12312312312</a></li>`)
             });
             html.push('</ul>');
             return html.join('');
         };
-        var lottery = function(count){
+        var lottery =  function(count){
             var list = canvas.getElementsByTagName('a');
             var color = 'yellow';
+            //  await getMembers()
             var ret = member
                 .filter(function(m, index){
                     m.index = index;
@@ -205,8 +232,12 @@
                 .map(function(m){
                   choosed[getKey(m)] = 1;
                   list[m.index].style.color = color;
-                  return m.name + '<br/>' + m.phone; 
+                //   return m.user.nickname + '<br/>' + m.user.id; 
+                return `<div style="height:130px;border-radio:50%;background-image:url(${m.user.headimgurl});background-size:100% 100%"></div>`
                 });
+
+                // const testMen = JSON.parse(JSON.stringify(member))
+                console.log(ret)
             localStorage.setItem('choosed', JSON.stringify(choosed));
             return ret;
         };
@@ -225,6 +256,21 @@
                 ]
             },
             mounted () {
+
+                axios.get('https://mp.singzer.cn/lotterygame/list')
+            .then(function (response) {
+                member = response.data.data.lottery_game_list[0].join_users
+                for(let i =0;i<30;i++){
+                    member.push({
+                        id:i+10,
+                        user:{
+                            nickname:'测试'+i,
+                            id:i+10,
+                            headimgurl:"https://thirdwx.qlogo.cn/mmopen/vi_32/aku0U23oNwuxkumv5e3tdGQEvRnhZBCe263FbDewcDD97FAibNwiaoE9ND5aMicMR4SBrlaJjxrdV3HGRQ5dZYs7Q/132"
+                        }
+                    })
+                }
+                // console.log(response)
                 canvas.innerHTML = createHTML();
                 TagCanvas.Start('myCanvas', '', {
                     textColour: null,
@@ -232,6 +278,12 @@
                     dragControl: 1,
                     textHeight: 14
                 });
+                console.log('1231231')
+            })
+            .catch(function (error) {
+                console.log(error);
+            });
+                
             },
             methods: {
                 reset: function(){
